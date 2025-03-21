@@ -7,6 +7,7 @@ import { Link } from "react-router-dom";
 const Home = () => {
     // Get books from Redux store
     const books = useSelector(state => state.book.books);
+    const isDark = useSelector(state => state.darkMode.isDark);
 
     return (
         <div>
@@ -43,13 +44,15 @@ const Home = () => {
                     <Booksdata title="Featured Books" books={books} />
                 </div>
 
-                <div className="mt-16 bg-blue-50 rounded-lg p-8">
-                    <h2 className="text-3xl font-bold mb-6">About Our Library</h2>
-                    <p className="text-lg mb-4">
+                <div className={`mt-16 rounded-lg p-8 ${isDark ? 'bg-gray-800' : 'bg-blue-50'}`}>
+                    <h2 className={`text-3xl font-bold mb-6 ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                        About Our Library
+                    </h2>
+                    <p className={`text-lg mb-4 ${isDark ? 'text-gray-300' : 'text-gray-800'}`}>
                         Our online library management system makes it easy to discover new books,
                         organize your collection, and keep track of your reading journey.
                     </p>
-                    <p className="text-lg">
+                    <p className={`text-lg ${isDark ? 'text-gray-300' : 'text-gray-800'}`}>
                         With features like category browsing, search functionality, and the ability to
                         add your own books, managing your library has never been easier.
                     </p>
