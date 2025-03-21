@@ -1,4 +1,3 @@
-// src/router.jsx
 import { createBrowserRouter } from "react-router-dom";
 import App from "./App";
 import Home from './Pages/Home/Home';
@@ -7,33 +6,51 @@ import AddBooks from "./Pages/Addbooks/AddBooks";
 import BookDetail from "./Pages/Bookdetail/BookDetail";
 import Error from "./Pages/Error/Error";
 import BookPage from "./Components/BookPage";
-import ErrorBoundary from "./Components/ErrorBoundary"; // Import the ErrorBoundary
+import Login from "./Pages/Auth/Login";
+import Register from "./Pages/Auth/Register";
+import ReadingList from "./Pages/Readinglist/ReadingList.jsx";
 
 const router = createBrowserRouter([
     {
-        path:'/',
-        element: <ErrorBoundary><App /></ErrorBoundary>,
-        children:[
+        path: '/',
+        element: <App />,
+        errorElement: <Error />,
+        children: [
             {
-                path:'/',
-                element: <ErrorBoundary><Home /></ErrorBoundary>
+                path: '/',
+                element: <Home />
             },
             {
-                path:'/browsebook',
-                element: <ErrorBoundary><Books /></ErrorBoundary>
-            },{
-                path:'/addbooks',
-                element: <ErrorBoundary><AddBooks /></ErrorBoundary>
-            },{
-                path:'/book/:id',
-                element: <ErrorBoundary><BookDetail /></ErrorBoundary>
-            },{
-                path:'/books/:catergory',
-                element: <ErrorBoundary><BookPage /></ErrorBoundary>
+                path: '/browsebook',
+                element: <Books />
+            },
+            {
+                path: '/addbooks',
+                element: <AddBooks />
+            },
+            {
+                path: '/book/:id',
+                element: <BookDetail />
+            },
+            {
+                path: '/books/:category',
+                element: <BookPage />
+            },
+            // Auth routes
+            {
+                path: '/login',
+                element: <Login />
+            },
+            {
+                path: '/register',
+                element: <Register />
+            },
+            {
+                path: '/ReadingList',
+                element: <ReadingList />
             }
-        ],
-        errorElement: <Error />
-    },
+        ]
+    }
 ]);
 
 export default router;

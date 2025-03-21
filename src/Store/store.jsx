@@ -46,7 +46,7 @@ const initialBooks = [
         author: "J.R.R. Tolkien",
         description: "A fantasy novel and prequel to The Lord of the Rings.",
         img: "https://covers.openlibrary.org/b/id/6979861-M.jpg",
-        type: "fantacy",
+        type: "fantasy",
         rating: 4.9
     }
 ];
