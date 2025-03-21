@@ -1,4 +1,4 @@
-import 'src/diagnostics.jsx'
+import 'src/diagnostic.jsx'
 /*import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import App from './App.jsx';
