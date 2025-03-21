@@ -1,4 +1,16 @@
-// In main.jsx
-import FixedNavbar from './Components/FixedNavbar';
+// src/main.jsx
+import React from 'react';
+import { createRoot } from 'react-dom/client';
+import './index.css';
+import { Provider } from 'react-redux';
+import store from './Store/store.jsx';
+import { BrowserRouter } from 'react-router-dom';
+import App from './App.jsx';
 
-// ... rest of your code
+createRoot(document.getElementById('root')).render(
+    <Provider store={store}>
+        <BrowserRouter>
+            <App />
+        </BrowserRouter>
+    </Provider>
+);

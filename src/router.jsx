@@ -1,3 +1,4 @@
+// src/router.jsx
 import { createBrowserRouter } from "react-router-dom";
 import App from "./App";
 import Home from './Pages/Home/Home';
@@ -6,35 +7,33 @@ import AddBooks from "./Pages/Addbooks/AddBooks";
 import BookDetail from "./Pages/Bookdetail/BookDetail";
 import Error from "./Pages/Error/Error";
 import BookPage from "./Components/BookPage";
+import ErrorBoundary from "./Components/ErrorBoundary"; // Import the ErrorBoundary
 
 const router = createBrowserRouter([
     {
-        path: '/',
-        element: <App />,
-        errorElement: <Error />, // Fehlerseite für ungültige Routen
-        children: [
+        path:'/',
+        element: <ErrorBoundary><App /></ErrorBoundary>,
+        children:[
             {
-                path: '/',
-                element: <Home /> // Startseite
+                path:'/',
+                element: <ErrorBoundary><Home /></ErrorBoundary>
             },
             {
-                path: '/browsebook',
-                element: <Books /> // Seite zum Durchsuchen von Büchern
-            },
-            {
-                path: '/addbooks',
-                element: <AddBooks /> // Seite zum Hinzufügen von Büchern
-            },
-            {
-                path: '/book/:id',
-                element: <BookDetail /> // Detailseite für ein Buch
-            },
-            {
-                path: '/books/:category', // Korrigierter Pfad (category statt catergory)
-                element: <BookPage /> // Seite für Bücher basierend auf einer Kategorie
+                path:'/browsebook',
+                element: <ErrorBoundary><Books /></ErrorBoundary>
+            },{
+                path:'/addbooks',
+                element: <ErrorBoundary><AddBooks /></ErrorBoundary>
+            },{
+                path:'/book/:id',
+                element: <ErrorBoundary><BookDetail /></ErrorBoundary>
+            },{
+                path:'/books/:catergory',
+                element: <ErrorBoundary><BookPage /></ErrorBoundary>
             }
-        ]
-    }
+        ],
+        errorElement: <Error />
+    },
 ]);
 
 export default router;
