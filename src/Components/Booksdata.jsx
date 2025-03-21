@@ -1,32 +1,19 @@
 import React from 'react';
-import {useSelector} from 'react-redux';
-import { Link } from 'react-router-dom';
-import BookCard from './BookCard';
+import BookCard from './BookCard'; // Importiere die BookCard-Komponente
 
-const Booksdata = ({ title, inputValue }) => {
-
-    const bookData = useSelector(state => state.book);
-    
-    const searchedValue = inputValue ? inputValue.toLowerCase() : '';
-
-    const filterData = bookData.filter((book) => (
-        (book.title && book.title.toLowerCase().includes(searchedValue)) || 
-        (book.author && book.author.toLowerCase().includes(searchedValue))
-    ));
-    
+const Booksdata = ({ title, books }) => {
     return (
-        <div className='mt-10 p-5'>
-            <div className='flex justify-between items-center'>
-                <h2 className='font-Poppins font-medium text-3xl'>{title ? title : 'Popular Books'}</h2>
-                {title ? '' : <Link to='/browsebook'><p className='text-black font-normal text-base underline underline-offset-1'>View more</p></Link>}
-            </div>
-            <div className="flex flex-wrap justify-center gap-5 mt-8">
-                {filterData.map((book) => (
-                    <BookCard book={book} key={book.id} />
-                ))}
+        <div>
+            <h2 className="text-xl font-bold mb-4">{title}</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                {books.length > 0 ? (
+                    books.map((book) => <BookCard key={book.key} book={book} />)
+                ) : (
+                    <p>Keine Bücher gefunden.</p>
+                )}
             </div>
         </div>
-    )
-}
+    );
+};
 
 export default Booksdata;

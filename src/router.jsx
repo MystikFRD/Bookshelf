@@ -6,32 +6,35 @@ import AddBooks from "./Pages/Addbooks/AddBooks";
 import BookDetail from "./Pages/Bookdetail/BookDetail";
 import Error from "./Pages/Error/Error";
 import BookPage from "./Components/BookPage";
+
 const router = createBrowserRouter([
     {
-        path:'/',
-        element:<App />,
-        children:[
+        path: '/',
+        element: <App />,
+        errorElement: <Error />, // Fehlerseite für ungültige Routen
+        children: [
             {
-                path:'/',
-                element:<Home />
+                path: '/',
+                element: <Home /> // Startseite
             },
             {
-                path:'/browsebook',
-                element:<Books />
-            },{
-                path:'/addbooks',
-                element:<AddBooks />
-            },{
-                path:'/book/:id',
-                element:<BookDetail />
-            },{
-                path:'/books/:catergory',
-                element:<BookPage />
+                path: '/browsebook',
+                element: <Books /> // Seite zum Durchsuchen von Büchern
+            },
+            {
+                path: '/addbooks',
+                element: <AddBooks /> // Seite zum Hinzufügen von Büchern
+            },
+            {
+                path: '/book/:id',
+                element: <BookDetail /> // Detailseite für ein Buch
+            },
+            {
+                path: '/books/:category', // Korrigierter Pfad (category statt catergory)
+                element: <BookPage /> // Seite für Bücher basierend auf einer Kategorie
             }
-        ],
-        errorElement:<Error />
-    },
-    
-])
+        ]
+    }
+]);
 
 export default router;
