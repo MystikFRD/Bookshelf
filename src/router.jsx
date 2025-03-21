@@ -8,7 +8,7 @@ import Error from "./Pages/Error/Error";
 import BookPage from "./Components/BookPage";
 import Login from "./Pages/Auth/Login";
 import Register from "./Pages/Auth/Register";
-import ReadingList from "./Pages/Readinglist/ReadingList.jsx";
+import ReadingList from "./Pages/ReadingList/ReadingList.jsx";
 
 const router = createBrowserRouter([
     {
@@ -46,7 +46,7 @@ const router = createBrowserRouter([
                 element: <Register />
             },
             {
-                path: '/ReadingList',
+                path: '/reading-list',
                 element: <ReadingList />
             }
         ]
