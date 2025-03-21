@@ -7,7 +7,7 @@ import { RouterProvider } from 'react-router-dom';
 import router from './router.jsx'; // Deine Routen-Konfiguration
 import { Provider } from 'react-redux';
 import store from './Store/store.jsx'; // Dein Redux-Store
-
+import ErrorBoundary from "./Components/ErrorBoundary.jsx";
 createRoot(document.getElementById('root')).render(
     <StrictMode>
         <Provider store={store}>
