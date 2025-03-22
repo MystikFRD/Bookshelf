@@ -1,7 +1,7 @@
 import PocketBase from 'pocketbase';
 
 // Initialize PocketBase client with persistence
-const pb = new PocketBase('https://your-pocketbase-server.com');
+const pb = new PocketBase('https://db.momoh.de');
 
 // Load auth state from localStorage on page load
 // This ensures authentication state persists across page refreshes
