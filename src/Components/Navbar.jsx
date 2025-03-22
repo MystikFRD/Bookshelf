@@ -1,30 +1,28 @@
 import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { HiOutlineMenu } from "react-icons/hi";
 import { FaUser, FaSignOutAlt, FaBook } from "react-icons/fa";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
+import { logout } from "../utils/api/authService";
+import { clearUser } from "../utils/userSlice";
 import DarkModeToggle from "./DarkModeToggle";
 
 const Navbar = () => {
     const [isOpen, setIsOpen] = useState(false);
     const [dropdownOpen, setDropdownOpen] = useState(false);
-    const [user, setUser] = useState(null);
 
     const isDark = useSelector((state) => state.darkMode.isDark);
+    const { user, isAuthenticated } = useSelector((state) => state.user);
 
-    // Check for user in localStorage on component mount
-    useEffect(() => {
-        const userInfo = localStorage.getItem('userInfo');
-        if (userInfo) {
-            setUser(JSON.parse(userInfo));
-        }
-    }, []);
+    const dispatch = useDispatch();
+    const navigate = useNavigate();
 
-    // Handle logout (we'll replace this with Redux actions later)
+    // Handle logout
     const handleLogout = () => {
-        localStorage.removeItem('userInfo');
-        setUser(null);
+        logout(); // PocketBase logout
+        dispatch(clearUser());
         setDropdownOpen(false);
+        navigate('/');
     };
 
     return (
@@ -39,7 +37,7 @@ const Navbar = () => {
                     <Link to='/browsebook'><li className="hover:text-blue-500 transition">Browse Book</li></Link>
                     <Link to="/addbooks"><li className="hover:text-blue-500 transition">Add books</li></Link>
 
-                    {user ? (
+                    {isAuthenticated && user ? (
                         <li className="relative">
                             <button
                                 onClick={() => setDropdownOpen(!dropdownOpen)}
@@ -100,7 +98,7 @@ const Navbar = () => {
                 </ul>
 
                 <div className="md:hidden flex items-center gap-3">
-                    {user ? (
+                    {isAuthenticated && user ? (
                         <button
                             onClick={() => setDropdownOpen(!dropdownOpen)}
                             className={`p-2 rounded-full ${
@@ -125,7 +123,7 @@ const Navbar = () => {
                 </div>
             </div>
 
-            {dropdownOpen && user && (
+            {dropdownOpen && isAuthenticated && user && (
                 <div className={`md:hidden p-2 ${
                     isDark ? 'bg-gray-800' : 'bg-white border-t'
                 }`}>

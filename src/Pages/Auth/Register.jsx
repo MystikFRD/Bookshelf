@@ -1,6 +1,8 @@
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { useSelector } from 'react-redux';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { useSelector, useDispatch } from 'react-redux';
+import { register } from '../../utils/api/authService';
+import { setUser, setLoading, setError } from '../../utils/userSlice';
 
 const Register = () => {
     const [formData, setFormData] = useState({
@@ -10,10 +12,18 @@ const Register = () => {
         confirmPassword: ''
     });
 
-    const [error, setError] = useState('');
-    const [loading, setLoading] = useState(false);
-
+    const { loading, error, isAuthenticated } = useSelector((state) => state.user);
     const isDark = useSelector((state) => state.darkMode.isDark);
+
+    const dispatch = useDispatch();
+    const navigate = useNavigate();
+
+    // Redirect if already authenticated
+    useEffect(() => {
+        if (isAuthenticated) {
+            navigate('/');
+        }
+    }, [isAuthenticated, navigate]);
 
     const handleChange = (e) => {
         setFormData({
@@ -24,43 +34,28 @@ const Register = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        setError('');
 
         // Simple validation
         if (formData.password !== formData.confirmPassword) {
-            setError('Passwords do not match');
+            dispatch(setError('Passwords do not match'));
             return;
         }
 
-        if (formData.password.length < 6) {
-            setError('Password must be at least 6 characters');
+        if (formData.password.length < 8) {
+            dispatch(setError('Password must be at least 8 characters'));
             return;
         }
 
-        setLoading(true);
+        dispatch(setLoading(true));
 
         try {
-            // For now, just simulate registration - you'll replace this with actual API calls later
-            console.log('Registration attempted with:', formData);
-
-            // Simulate API delay
-            await new Promise(resolve => setTimeout(resolve, 1000));
-
-            // Simulate successful registration and login
-            localStorage.setItem('userInfo', JSON.stringify({
-                id: '123456',
-                name: formData.username,
-                email: formData.email,
-                token: 'dummy-token-12345'
-            }));
-
-            // Redirect to home page (you'll handle this properly with Redux later)
-            window.location.href = '/';
-
+            const userData = await register(formData);
+            dispatch(setUser(userData));
+            navigate('/');
         } catch (err) {
-            setError('Registration failed. Please try again.');
+            dispatch(setError(err.message || 'Registration failed. Please try again.'));
         } finally {
-            setLoading(false);
+            dispatch(setLoading(false));
         }
     };
 

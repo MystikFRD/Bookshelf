@@ -1,42 +1,38 @@
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { useSelector } from 'react-redux';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { useSelector, useDispatch } from 'react-redux';
+import { login } from '../../utils/api/authService';
+import { setUser, setLoading, setError } from '../../utils/userSlice';
 
 const Login = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
-    const [error, setError] = useState('');
-    const [loading, setLoading] = useState(false);
 
+    const { loading, error, isAuthenticated } = useSelector((state) => state.user);
     const isDark = useSelector((state) => state.darkMode.isDark);
+
+    const dispatch = useDispatch();
+    const navigate = useNavigate();
+
+    // Redirect if already authenticated
+    useEffect(() => {
+        if (isAuthenticated) {
+            navigate('/');
+        }
+    }, [isAuthenticated, navigate]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        setError('');
-        setLoading(true);
+        dispatch(setLoading(true));
 
         try {
-            // For now, just simulate a login - you'll replace this with actual API calls later
-            console.log('Login attempted with:', { email, password });
-
-            // Simulate API delay
-            await new Promise(resolve => setTimeout(resolve, 1000));
-
-            // Simulate successful login
-            localStorage.setItem('userInfo', JSON.stringify({
-                id: '123456',
-                name: 'Demo User',
-                email: email,
-                token: 'dummy-token-12345'
-            }));
-
-            // Redirect to home page (you'll handle this properly with Redux later)
-            window.location.href = '/';
-
+            const userData = await login(email, password);
+            dispatch(setUser(userData));
+            navigate('/');
         } catch (err) {
-            setError('Login failed. Please check your credentials.');
+            dispatch(setError(err.message || 'Login failed. Please check your credentials.'));
         } finally {
-            setLoading(false);
+            dispatch(setLoading(false));
         }
     };
 

@@ -1,82 +1,63 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { FaBook, FaBookOpen, FaCheckCircle, FaTimesCircle } from 'react-icons/fa';
+import { getUserReadingList, removeFromReadingList } from '../../utils/api/readingListService';
 
 const ReadingList = () => {
     const [readingList, setReadingList] = useState([]);
     const [activeFilter, setActiveFilter] = useState('all');
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState('');
+
     const isDark = useSelector((state) => state.darkMode.isDark);
+    const { isAuthenticated } = useSelector((state) => state.user);
 
-    // For demonstration - will be replaced with API calls
+    const navigate = useNavigate();
+
+    // Redirect to login if not authenticated
     useEffect(() => {
-        // Simulate loading reading list from localStorage or API
-        const mockReadingList = [
-            {
-                id: '1',
-                title: 'The Great Gatsby',
-                author: 'F. Scott Fitzgerald',
-                coverImage: 'https://covers.openlibrary.org/b/id/6424091-M.jpg',
-                type: 'book',
-                status: 'reading',
-                progress: {
-                    currentPage: 120,
-                    totalPages: 180
-                },
-                userRating: 4,
-                dateAdded: new Date('2023-01-15')
-            },
-            {
-                id: '2',
-                title: 'One Piece',
-                author: 'Eiichiro Oda',
-                coverImage: 'https://covers.openlibrary.org/b/id/8479047-M.jpg',
-                type: 'manhwa',
-                status: 'reading',
-                progress: {
-                    currentChapter: 950,
-                    totalChapters: 1088
-                },
-                userRating: 5,
-                dateAdded: new Date('2023-02-10')
-            },
-            {
-                id: '3',
-                title: 'To Kill a Mockingbird',
-                author: 'Harper Lee',
-                coverImage: 'https://covers.openlibrary.org/b/id/8764743-M.jpg',
-                type: 'book',
-                status: 'to-read',
-                progress: {
-                    currentPage: 0,
-                    totalPages: 281
-                },
-                userRating: 0,
-                dateAdded: new Date('2023-03-05')
-            },
-            {
-                id: '4',
-                title: 'Solo Leveling',
-                author: 'Chugong',
-                coverImage: 'https://covers.openlibrary.org/b/id/12842027-M.jpg',
-                type: 'manhwa',
-                status: 'completed',
-                progress: {
-                    currentChapter: 179,
-                    totalChapters: 179
-                },
-                userRating: 5,
-                dateAdded: new Date('2023-01-20')
-            }
-        ];
+        if (!isAuthenticated) {
+            navigate('/login');
+        }
+    }, [isAuthenticated, navigate]);
 
-        setReadingList(mockReadingList);
-    }, []);
+    // Fetch user's reading list
+    useEffect(() => {
+        const fetchReadingList = async () => {
+            if (!isAuthenticated) return;
+
+            setLoading(true);
+            try {
+                const list = await getUserReadingList();
+                setReadingList(list);
+            } catch (err) {
+                console.error('Error fetching reading list:', err);
+                setError('Failed to load your reading list. Please try again later.');
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchReadingList();
+    }, [isAuthenticated]);
 
     // Filter reading list based on active filter
     const filteredList = activeFilter === 'all'
         ? readingList
-        : readingList.filter(book => book.status === activeFilter);
+        : readingList.filter(item => item.status === activeFilter);
+
+    // Handle removing a book from reading list
+    const handleRemoveBook = async (readingListId) => {
+        try {
+            await removeFromReadingList(readingListId);
+            // Update the local state to remove the item
+            setReadingList(prev => prev.filter(item => item.id !== readingListId));
+        } catch (err) {
+            console.error('Error removing book:', err);
+            setError('Failed to remove book from your reading list.');
+        }
+    };
 
     // Get status icon
     const getStatusIcon = (status) => {
@@ -95,17 +76,20 @@ const ReadingList = () => {
     };
 
     // Calculate and format progress
-    const formatProgress = (book) => {
+    const formatProgress = (item) => {
+        const book = item.expand?.book;
+        if (!book) return 'N/A';
+
         if (book.type === 'book') {
-            const percentage = book.progress.totalPages > 0
-                ? Math.round((book.progress.currentPage / book.progress.totalPages) * 100)
+            const percentage = item.totalPages > 0
+                ? Math.round((item.currentPage / item.totalPages) * 100)
                 : 0;
-            return `${book.progress.currentPage} / ${book.progress.totalPages} pages (${percentage}%)`;
+            return `${item.currentPage} / ${item.totalPages} pages (${percentage}%)`;
         } else {
-            const percentage = book.progress.totalChapters > 0
-                ? Math.round((book.progress.currentChapter / book.progress.totalChapters) * 100)
+            const percentage = item.totalChapters > 0
+                ? Math.round((item.currentChapter / item.totalChapters) * 100)
                 : 0;
-            return `${book.progress.currentChapter} / ${book.progress.totalChapters} chapters (${percentage}%)`;
+            return `${item.currentChapter} / ${item.totalChapters} chapters (${percentage}%)`;
         }
     };
 
@@ -118,10 +102,24 @@ const ReadingList = () => {
         });
     };
 
+    if (loading) {
+        return (
+            <div className={`py-8 px-4 text-center ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                <p>Loading your reading list...</p>
+            </div>
+        );
+    }
+
     return (
         <div className={`py-8 px-4 ${isDark ? 'bg-gray-900 text-white' : 'bg-white text-gray-900'}`}>
             <div className="max-w-6xl mx-auto">
                 <h1 className="text-3xl font-bold mb-6">My Reading List</h1>
+
+                {error && (
+                    <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+                        {error}
+                    </div>
+                )}
 
                 {/* Status Filters */}
                 <div className="flex flex-wrap gap-2 mb-6">
@@ -180,110 +178,121 @@ const ReadingList = () => {
                 {/* Reading List */}
                 {filteredList.length > 0 ? (
                     <div className="grid grid-cols-1 gap-4">
-                        {filteredList.map(book => (
-                            <div
-                                key={book.id}
-                                className={`p-4 rounded-lg shadow-md ${
-                                    isDark ? 'bg-gray-800' : 'bg-white border border-gray-200'
-                                }`}
-                            >
-                                <div className="flex flex-col md:flex-row gap-4">
-                                    {/* Book Cover */}
-                                    <div className="w-full md:w-32 flex-shrink-0">
-                                        <img
-                                            src={book.coverImage}
-                                            alt={book.title}
-                                            className="w-full h-48 md:h-auto object-cover rounded"
-                                        />
-                                    </div>
+                        {filteredList.map(item => {
+                            const book = item.expand?.book;
+                            if (!book) return null;
 
-                                    {/* Book Details */}
-                                    <div className="flex-grow">
-                                        <div className="flex justify-between items-start">
-                                            <h2 className="text-xl font-bold">{book.title}</h2>
-                                            <div className="flex items-center gap-1">
-                                                {getStatusIcon(book.status)}
-                                                <span className={`text-sm ${
-                                                    book.status === 'reading' ? 'text-blue-500' :
-                                                        book.status === 'completed' ? 'text-green-500' :
-                                                            book.status === 'dropped' ? 'text-red-500' :
-                                                                isDark ? 'text-gray-400' : 'text-gray-500'
-                                                }`}>
-                          {book.status.charAt(0).toUpperCase() + book.status.slice(1).replace('-', ' ')}
-                        </span>
-                                            </div>
+                            return (
+                                <div
+                                    key={item.id}
+                                    className={`p-4 rounded-lg shadow-md ${
+                                        isDark ? 'bg-gray-800' : 'bg-white border border-gray-200'
+                                    }`}
+                                >
+                                    <div className="flex flex-col md:flex-row gap-4">
+                                        {/* Book Cover */}
+                                        <div className="w-full md:w-32 flex-shrink-0">
+                                            <img
+                                                src={pb.getFileUrl(book, book.image)}
+                                                alt={book.title}
+                                                className="w-full h-48 md:h-auto object-cover rounded"
+                                            />
                                         </div>
 
-                                        <p className={`${isDark ? 'text-gray-300' : 'text-gray-700'} mb-2`}>
-                                            {book.author}
-                                        </p>
-
-                                        <div className="flex flex-wrap gap-2 mb-3">
-                      <span className={`px-2 py-1 text-xs rounded-full ${
-                          isDark ? 'bg-gray-700 text-gray-300' : 'bg-gray-200 text-gray-700'
-                      }`}>
-                        {book.type.charAt(0).toUpperCase() + book.type.slice(1)}
-                      </span>
-                                            {book.userRating > 0 && (
-                                                <span className={`px-2 py-1 text-xs rounded-full ${
-                                                    isDark ? 'bg-yellow-900 text-yellow-300' : 'bg-yellow-100 text-yellow-800'
-                                                }`}>
-                          {'★'.repeat(book.userRating)}{'☆'.repeat(5 - book.userRating)}
-                        </span>
-                                            )}
-                                            <span className={`px-2 py-1 text-xs rounded-full ${
-                                                isDark ? 'bg-gray-700 text-gray-300' : 'bg-gray-200 text-gray-700'
-                                            }`}>
-                        Added: {formatDate(book.dateAdded)}
-                      </span>
-                                        </div>
-
-                                        {/* Progress Bar */}
-                                        {(book.status === 'reading' || book.status === 'completed') && (
-                                            <div className="mb-3">
-                                                <div className="w-full bg-gray-200 rounded-full h-2.5 mb-1">
-                                                    <div
-                                                        className="bg-blue-600 h-2.5 rounded-full"
-                                                        style={{
-                                                            width: book.type === 'book'
-                                                                ? `${(book.progress.currentPage / book.progress.totalPages) * 100}%`
-                                                                : `${(book.progress.currentChapter / book.progress.totalChapters) * 100}%`
-                                                        }}
-                                                    ></div>
+                                        {/* Book Details */}
+                                        <div className="flex-grow">
+                                            <div className="flex justify-between items-start">
+                                                <h2 className="text-xl font-bold">{book.title}</h2>
+                                                <div className="flex items-center gap-1">
+                                                    {getStatusIcon(item.status)}
+                                                    <span className={`text-sm ${
+                                                        item.status === 'reading' ? 'text-blue-500' :
+                                                            item.status === 'completed' ? 'text-green-500' :
+                                                                item.status === 'dropped' ? 'text-red-500' :
+                                                                    isDark ? 'text-gray-400' : 'text-gray-500'
+                                                    }`}>
+                                                        {item.status.charAt(0).toUpperCase() + item.status.slice(1).replace('-', ' ')}
+                                                    </span>
                                                 </div>
-                                                <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
-                                                    {formatProgress(book)}
-                                                </p>
                                             </div>
-                                        )}
 
-                                        {/* Action Buttons */}
-                                        <div className="flex gap-2 mt-3">
-                                            <Link
-                                                to={`/book/${book.id}`}
-                                                className="px-3 py-1 text-sm rounded bg-blue-600 hover:bg-blue-700 text-white"
-                                            >
-                                                View Details
-                                            </Link>
-                                            <button className={`px-3 py-1 text-sm rounded ${
-                                                isDark
-                                                    ? 'bg-gray-700 text-white hover:bg-gray-600'
-                                                    : 'bg-gray-200 text-gray-800 hover:bg-gray-300'
-                                            }`}>
-                                                Update Progress
-                                            </button>
-                                            <button className={`px-3 py-1 text-sm rounded ${
-                                                isDark
-                                                    ? 'bg-red-900 text-white hover:bg-red-800'
-                                                    : 'bg-red-100 text-red-800 hover:bg-red-200'
-                                            }`}>
-                                                Remove
-                                            </button>
+                                            <p className={`${isDark ? 'text-gray-300' : 'text-gray-700'} mb-2`}>
+                                                {book.author}
+                                            </p>
+
+                                            <div className="flex flex-wrap gap-2 mb-3">
+                                                <span className={`px-2 py-1 text-xs rounded-full ${
+                                                    isDark ? 'bg-gray-700 text-gray-300' : 'bg-gray-200 text-gray-700'
+                                                }`}>
+                                                    {book.type.charAt(0).toUpperCase() + book.type.slice(1)}
+                                                </span>
+                                                {book.rating > 0 && (
+                                                    <span className={`px-2 py-1 text-xs rounded-full ${
+                                                        isDark ? 'bg-yellow-900 text-yellow-300' : 'bg-yellow-100 text-yellow-800'
+                                                    }`}>
+                                                        {book.rating.toFixed(1)} ★
+                                                    </span>
+                                                )}
+                                                <span className={`px-2 py-1 text-xs rounded-full ${
+                                                    isDark ? 'bg-gray-700 text-gray-300' : 'bg-gray-200 text-gray-700'
+                                                }`}>
+                                                    Added: {formatDate(item.dateAdded)}
+                                                </span>
+                                            </div>
+
+                                            {/* Progress Bar */}
+                                            {(item.status === 'reading' || item.status === 'completed') && (
+                                                <div className="mb-3">
+                                                    <div className="w-full bg-gray-200 rounded-full h-2.5 mb-1">
+                                                        <div
+                                                            className="bg-blue-600 h-2.5 rounded-full"
+                                                            style={{
+                                                                width: book.type === 'book'
+                                                                    ? `${(item.currentPage / item.totalPages) * 100}%`
+                                                                    : `${(item.currentChapter / item.totalChapters) * 100}%`
+                                                            }}
+                                                        ></div>
+                                                    </div>
+                                                    <p className={`text-sm ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
+                                                        {formatProgress(item)}
+                                                    </p>
+                                                </div>
+                                            )}
+
+                                            {/* Action Buttons */}
+                                            <div className="flex gap-2 mt-3">
+                                                <Link
+                                                    to={`/book/${book.id}`}
+                                                    className="px-3 py-1 text-sm rounded bg-blue-600 hover:bg-blue-700 text-white"
+                                                >
+                                                    View Details
+                                                </Link>
+                                                <Link
+                                                    to={`/update-progress/${item.id}`}
+                                                    className={`px-3 py-1 text-sm rounded ${
+                                                        isDark
+                                                            ? 'bg-gray-700 text-white hover:bg-gray-600'
+                                                            : 'bg-gray-200 text-gray-800 hover:bg-gray-300'
+                                                    }`}
+                                                >
+                                                    Update Progress
+                                                </Link>
+                                                <button
+                                                    onClick={() => handleRemoveBook(item.id)}
+                                                    className={`px-3 py-1 text-sm rounded ${
+                                                        isDark
+                                                            ? 'bg-red-900 text-white hover:bg-red-800'
+                                                            : 'bg-red-100 text-red-800 hover:bg-red-200'
+                                                    }`}
+                                                >
+                                                    Remove
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
-                            </div>
-                        ))}
+                            );
+                        })}
                     </div>
                 ) : (
                     <div className={`p-8 text-center rounded-lg ${

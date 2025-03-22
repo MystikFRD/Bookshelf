@@ -3,21 +3,37 @@ import { useSelector } from 'react-redux';
 import Categories from '../../Components/Categories';
 import Booksdata from '../../Components/Booksdata';
 import Searchfield from '../../Components/Searchfield';
-import { searchBooks } from '../../utils/api/OpenLibrary_Search';
+import { getAllBooks, searchBooks } from '../../utils/api/bookService';
 
 const Books = () => {
-  const [inputValue, setInputValue] = useState(''); // Suchanfrage
-  const [searchResults, setSearchResults] = useState([]); // API search results
-  const [error, setError] = useState(''); // Fehlerstatus
-  const [loading, setLoading] = useState(false); // Ladeanzeige
+  const [books, setBooks] = useState([]);
+  const [inputValue, setInputValue] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  // Get books from Redux store
-  const localBooks = useSelector(state => state.book.books);
+  // Fetch all books on component mount
+  useEffect(() => {
+    const fetchBooks = async () => {
+      setLoading(true);
+      try {
+        const fetchedBooks = await getAllBooks();
+        setBooks(fetchedBooks);
+      } catch (err) {
+        console.error('Error fetching books:', err);
+        setError('Error loading books. Please try again later.');
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  // Use local books as default, use search results when available
-  const displayBooks = inputValue.trim() ? searchResults : localBooks;
+    fetchBooks();
+  }, []);
 
-  // Funktion, um die Suchanfrage zu aktualisieren
+  // Display books based on search or all books
+  const displayBooks = inputValue.trim() ? searchResults : books;
+
+  // Handle search functionality
   const handleSearchTxt = async (value) => {
     setInputValue(value);
 
@@ -27,21 +43,21 @@ const Books = () => {
       return;
     }
 
-    setLoading(true); // Ladeanzeige aktivieren
-    setError(''); // Fehlerstatus zurücksetzen
+    setLoading(true);
+    setError('');
 
     try {
-      const results = await searchBooks(value); // Suche nach Büchern
-      setSearchResults(results); // Speichere die Ergebnisse
+      const results = await searchBooks(value);
+      setSearchResults(results);
       if (results.length === 0) {
-        setError('Keine Bücher gefunden.');
+        setError('No books found matching your search.');
       }
     } catch (err) {
       console.error('Search error:', err);
-      setError('Fehler beim Abrufen der Bücher. Bitte versuchen Sie es später erneut.');
+      setError('Error searching books. Please try again later.');
       setSearchResults([]);
     } finally {
-      setLoading(false); // Ladeanzeige deaktivieren
+      setLoading(false);
     }
   };
 
@@ -52,7 +68,7 @@ const Books = () => {
           <Searchfield handleText={handleSearchTxt} />
           {error && <p className="text-red-500 text-center mt-4">{error}</p>}
           {loading ? (
-              <p className="text-blue-500 text-center mt-4">Lade Bücher...</p>
+              <p className="text-blue-500 text-center mt-4">Loading books...</p>
           ) : (
               <Booksdata
                   title={inputValue.trim() ? 'Search Results' : 'All Books'}
