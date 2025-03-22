@@ -1,13 +1,35 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { useSelector } from "react-redux";
 import Categories from "../../Components/Categories";
 import Booksdata from "../../Components/Booksdata";
 import { Link } from "react-router-dom";
+import { getAllBooks } from "../../utils/api/bookService";
 
 const Home = () => {
-    // Get books from Redux store
-    const books = useSelector(state => state.book.books);
+    // State to store fetched books
+    const [books, setBooks] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState('');
+
     const isDark = useSelector(state => state.darkMode.isDark);
+
+    // Fetch books on component mount
+    useEffect(() => {
+        const fetchBooks = async () => {
+            try {
+                setLoading(true);
+                const fetchedBooks = await getAllBooks();
+                setBooks(fetchedBooks);
+            } catch (err) {
+                console.error('Error fetching books:', err);
+                setError('Error loading books. Please try again later.');
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchBooks();
+    }, []);
 
     return (
         <div>
@@ -41,7 +63,13 @@ const Home = () => {
                 <Categories />
 
                 <div className="mt-16">
-                    <Booksdata title="Featured Books" books={books} />
+                    {loading ? (
+                        <p className="text-center text-lg">Loading books...</p>
+                    ) : error ? (
+                        <p className="text-center text-red-500">{error}</p>
+                    ) : (
+                        <Booksdata title="Featured Books" books={books} />
+                    )}
                 </div>
 
                 <div className={`mt-16 rounded-lg p-8 ${isDark ? 'bg-gray-800' : 'bg-blue-50'}`}>

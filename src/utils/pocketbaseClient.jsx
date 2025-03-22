@@ -5,7 +5,7 @@ const pb = new PocketBase('https://db.momoh.de');
 
 // Load auth state from localStorage on page load
 // This ensures authentication state persists across page refreshes
-if (typeof window !== 'undefined') {
+    if (typeof window !== 'undefined') {
     // Check if there's a stored auth state
     const storedAuthState = localStorage.getItem('pocketbase_auth');
 
