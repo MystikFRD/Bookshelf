@@ -94,7 +94,6 @@ export const updateUserProfile = async (formData) => {
         const updateData = {};
 
         // Extract data from FormData and create a plain object
-        if (formData.get('username')) updateData.username = formData.get('username');
         if (formData.get('name')) updateData.name = formData.get('name');
         if (formData.get('bio')) updateData.bio = formData.get('bio');
         if (formData.get('favoriteGenre')) updateData.favoriteGenre = formData.get('favoriteGenre');

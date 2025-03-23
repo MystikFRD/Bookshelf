@@ -12,9 +12,8 @@ const ProfilePage = () => {
     const dispatch = useDispatch();
 
     const [formData, setFormData] = useState({
-        username: '',
-        email: '',
         name: '',
+        email: '',
         bio: '',
         favoriteGenre: ''
     });
@@ -33,15 +32,14 @@ const ProfilePage = () => {
         }
     }, [isAuthenticated, authLoading, navigate]);
 
-    // Set initial form data from user state and ensure avatar always loads
+    // Set initial form data from user state
     useEffect(() => {
         if (user) {
             console.log("Setting user data:", user);
 
             setFormData({
-                username: user.username || '',
-                email: user.email || '',
                 name: user.name || '',
+                email: user.email || '',
                 bio: user.bio || '',
                 favoriteGenre: user.favoriteGenre || ''
             });
@@ -88,9 +86,8 @@ const ProfilePage = () => {
         // If canceling edit, reset form data to current user data
         if (isEditing && user) {
             setFormData({
-                username: user.username || '',
-                email: user.email || '',
                 name: user.name || '',
+                email: user.email || '',
                 bio: user.bio || '',
                 favoriteGenre: user.favoriteGenre || ''
             });
@@ -115,7 +112,6 @@ const ProfilePage = () => {
 
             // Create form data for the request
             const data = new FormData();
-            data.append('username', formData.username);
             data.append('name', formData.name);
 
             // Add bio if present
@@ -134,7 +130,6 @@ const ProfilePage = () => {
             }
 
             console.log("Sending profile update with data:", {
-                username: formData.username,
                 name: formData.name,
                 bio: formData.bio,
                 favoriteGenre: formData.favoriteGenre,
@@ -172,11 +167,37 @@ const ProfilePage = () => {
         navigate('/');
     };
 
-    // Show loading state while waiting for auth
+    // Loading state
     if (authLoading) {
         return (
             <div className="flex justify-center items-center min-h-screen">
                 <div className={`inline-block h-12 w-12 animate-spin rounded-full border-4 border-solid ${isDark ? 'border-blue-400' : 'border-blue-600'} border-r-transparent`}></div>
+            </div>
+        );
+    }
+
+    // Error state if user is not loaded properly
+    if (!user) {
+        return (
+            <div className={`py-8 px-4 ${isDark ? 'bg-gray-900 text-white' : 'bg-white text-gray-900'}`}>
+                <div className="max-w-2xl mx-auto text-center">
+                    <h1 className="text-3xl font-bold mb-4">Profile Not Available</h1>
+                    <p className="mb-6">Unable to load your profile information. Please try again later.</p>
+                    <div className="flex justify-center gap-4">
+                        <button
+                            onClick={() => window.location.reload()}
+                            className={`px-4 py-2 rounded ${isDark ? 'bg-blue-700' : 'bg-blue-600'} text-white`}
+                        >
+                            Reload Page
+                        </button>
+                        <button
+                            onClick={handleLogout}
+                            className={`px-4 py-2 rounded ${isDark ? 'bg-gray-700' : 'bg-gray-300 text-gray-800'}`}
+                        >
+                            Logout
+                        </button>
+                    </div>
+                </div>
             </div>
         );
     }
@@ -238,11 +259,6 @@ const ProfilePage = () => {
 
                 <div className="space-y-4">
                     <div>
-                        <h3 className={`text-lg font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Username</h3>
-                        <p className={`text-xl ${isDark ? 'text-white' : 'text-gray-900'}`}>{user?.username || 'Not set'}</p>
-                    </div>
-
-                    <div>
                         <h3 className={`text-lg font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>Email</h3>
                         <p className={`text-xl ${isDark ? 'text-white' : 'text-gray-900'}`}>{user?.email || 'Not set'}</p>
                     </div>
@@ -289,51 +305,26 @@ const ProfilePage = () => {
                     {/* Avatar Upload */}
                     {renderAvatar()}
 
-                    <div className="grid md:grid-cols-2 gap-6">
-                        {/* Username */}
-                        <div className="mb-4">
-                            <label
-                                htmlFor="username"
-                                className={`block mb-2 font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'}`}
-                            >
-                                Username
-                            </label>
-                            <input
-                                type="text"
-                                id="username"
-                                name="username"
-                                value={formData.username}
-                                onChange={handleChange}
-                                className={`w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 ${
-                                    isDark
-                                        ? 'bg-gray-700 border-gray-600 text-white focus:ring-blue-600'
-                                        : 'bg-white border-gray-300 text-gray-900 focus:ring-blue-500'
-                                }`}
-                                required
-                            />
-                        </div>
-
-                        {/* Display Name */}
-                        <div className="mb-4">
-                            <label
-                                htmlFor="name"
-                                className={`block mb-2 font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'}`}
-                            >
-                                Display Name
-                            </label>
-                            <input
-                                type="text"
-                                id="name"
-                                name="name"
-                                value={formData.name}
-                                onChange={handleChange}
-                                className={`w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 ${
-                                    isDark
-                                        ? 'bg-gray-700 border-gray-600 text-white focus:ring-blue-600'
-                                        : 'bg-white border-gray-300 text-gray-900 focus:ring-blue-500'
-                                }`}
-                            />
-                        </div>
+                    {/* Display Name */}
+                    <div className="mb-4">
+                        <label
+                            htmlFor="name"
+                            className={`block mb-2 font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'}`}
+                        >
+                            Display Name
+                        </label>
+                        <input
+                            type="text"
+                            id="name"
+                            name="name"
+                            value={formData.name}
+                            onChange={handleChange}
+                            className={`w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 ${
+                                isDark
+                                    ? 'bg-gray-700 border-gray-600 text-white focus:ring-blue-600'
+                                    : 'bg-white border-gray-300 text-gray-900 focus:ring-blue-500'
+                            }`}
+                        />
                     </div>
 
                     {/* Favorite Genre field */}
