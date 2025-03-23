@@ -9,6 +9,7 @@ import BookPage from "./Components/BookPage";
 import Login from "./Pages/Auth/Login";
 import Register from "./Pages/Auth/Register";
 import ReadingList from "./Pages/ReadingList/ReadingList.jsx";
+import ProfilePage from "./Pages/Profile/ProfilePage.jsx";
 import ProtectedRoute from "./Components/ProtectedRoute";
 import UpdateReadingProgress from "./Pages/ReadingList/UpdateReadingProgress";
 
@@ -46,6 +47,11 @@ const router = createBrowserRouter([
             {
                 path: '/register',
                 element: <Register />
+            },
+            // User routes
+            {
+                path: '/profile',
+                element: <ProtectedRoute><ProfilePage /></ProtectedRoute>
             },
             {
                 path: '/reading-list',
