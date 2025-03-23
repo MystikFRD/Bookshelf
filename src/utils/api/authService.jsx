@@ -13,6 +13,7 @@ export const login = async (email, password) => {
             username: authData.record.username,
             bio: authData.record.bio || '',
             avatar: authData.record.avatar,
+            favoriteGenre: authData.record.favoriteGenre || '',
             created: authData.record.created,
             collectionId: authData.record.collectionId
             // You can add more user fields here as needed
@@ -66,6 +67,7 @@ export const getCurrentUser = () => {
         name: model.name || model.username,
         username: model.username,
         bio: model.bio || '',
+        favoriteGenre: model.favoriteGenre || '',
         avatar: model.avatar,
         created: model.created,
         collectionId: model.collectionId
@@ -73,79 +75,105 @@ export const getCurrentUser = () => {
 };
 
 /**
- * Update user profile
+ * Update user profile - simplified version with plain object instead of FormData
  * @param {FormData} formData - Form data with profile updates
  * @returns {Promise<Object>} Updated user data
  */
 export const updateUserProfile = async (formData) => {
     try {
         if (!pb.authStore.isValid || !pb.authStore.model?.id) {
+            console.error("Authentication invalid for profile update");
             throw new Error('User not authenticated');
         }
 
         const userId = pb.authStore.model.id;
+        console.log("Updating profile for user:", userId);
 
-        // Make sure formData contains the correct fields
-        // PocketBase might reject the request if we try to update fields that don't exist
-        const validFormData = new FormData();
+        // Convert FormData to plain object for simpler handling
+        // This is more reliable with PocketBase in some cases
+        const updateData = {};
 
-        // Only add fields that exist in the form data and are allowed to be updated
-        if (formData.has('username')) validFormData.append('username', formData.get('username'));
-        if (formData.has('name')) validFormData.append('name', formData.get('name'));
-        if (formData.has('bio')) validFormData.append('bio', formData.get('bio'));
-        if (formData.has('avatar')) validFormData.append('avatar', formData.get('avatar'));
+        // Extract data from FormData and create a plain object
+        if (formData.get('username')) updateData.username = formData.get('username');
+        if (formData.get('name')) updateData.name = formData.get('name');
+        if (formData.get('bio')) updateData.bio = formData.get('bio');
+        if (formData.get('favoriteGenre')) updateData.favoriteGenre = formData.get('favoriteGenre');
 
-        // Handle special case for avatar
-        if (formData.has('avatar') && !formData.get('avatar')) {
-            // If avatar is null or empty, clear the avatar field
-            validFormData.append('avatar', null);
-        }
+        // Special handling for avatar if it's a File object
+        if (formData.get('avatar') instanceof File) {
+            // Keep avatar as is in FormData for file uploads
+            console.log("Avatar file detected for upload");
 
-        // Add retry mechanism
-        let retries = 0;
-        const maxRetries = 2;
-
-        while (retries <= maxRetries) {
+            // Use a simplified approach for avatar upload
             try {
-                const record = await pb.collection('users').update(userId, validFormData);
+                // First update text fields
+                console.log("Updating text fields:", updateData);
+                const updatedRecord = await pb.collection('users').update(userId, updateData);
+
+                // Then, if we have an avatar, update it separately
+                if (formData.get('avatar')) {
+                    console.log("Now updating avatar file");
+                    const avatarData = new FormData();
+                    avatarData.append('avatar', formData.get('avatar'));
+
+                    const finalRecord = await pb.collection('users').update(userId, avatarData);
+                    pb.authStore.save(pb.authStore.token, finalRecord);
+                    return mapUserRecord(finalRecord);
+                }
+
+                // If no avatar to update, return the record from text fields update
+                pb.authStore.save(pb.authStore.token, updatedRecord);
+                return mapUserRecord(updatedRecord);
+            } catch (err) {
+                console.error("Error in two-step update process:", err);
+                throw err;
+            }
+        } else {
+            // No avatar to upload, just update the text fields
+            console.log("Updating user profile with data:", updateData);
+            try {
+                const record = await pb.collection('users').update(userId, updateData);
+                console.log("Profile updated successfully:", record);
 
                 // Update auth store model to reflect changes
                 pb.authStore.save(pb.authStore.token, record);
 
-                return {
-                    id: record.id,
-                    email: record.email,
-                    username: record.username,
-                    name: record.name,
-                    bio: record.bio || '',
-                    avatar: record.avatar,
-                    created: record.created,
-                    collectionId: record.collectionId
-                };
+                return mapUserRecord(record);
             } catch (err) {
-                // Check if it's a network error or auto-cancellation
-                if ((err.status === 0 || err.message?.includes('autocancelled')) && retries < maxRetries) {
-                    retries++;
-                    console.log(`Retrying profile update (${retries}/${maxRetries})...`);
-                    // Wait before retrying
-                    await new Promise(resolve => setTimeout(resolve, 1000));
-                } else {
-                    throw err;
-                }
+                console.error("Error updating profile:", err);
+                throw err;
             }
         }
     } catch (error) {
-        console.error('Error updating user profile:', error);
+        console.error('Error in updateUserProfile:', error);
 
-        // Provide more specific error messages
-        if (error.status === 400) {
-            if (error.data?.username?.message) {
-                throw new Error(`Username error: ${error.data.username.message}`);
-            } else if (error.data?.avatar?.message) {
-                throw new Error(`Avatar error: ${error.data.avatar.message}`);
+        // Return detailed error message
+        if (error.data) {
+            // Extract field-specific error messages
+            const errorMessages = [];
+            for (const field in error.data) {
+                errorMessages.push(`${field}: ${error.data[field].message}`);
+            }
+            if (errorMessages.length > 0) {
+                throw new Error(errorMessages.join(', '));
             }
         }
 
-        throw new Error('Failed to update profile');
+        throw new Error(`Failed to update profile: ${error.message || 'Unknown error'}`);
     }
 };
+
+// Helper function to map PB user record to our app's user object format
+function mapUserRecord(record) {
+    return {
+        id: record.id,
+        email: record.email,
+        username: record.username,
+        name: record.name,
+        bio: record.bio || '',
+        favoriteGenre: record.favoriteGenre || '',
+        avatar: record.avatar,
+        created: record.created,
+        collectionId: record.collectionId
+    };
+}

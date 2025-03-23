@@ -15,25 +15,29 @@ const userSlice = createSlice({
             state.user = action.payload;
             state.isAuthenticated = true;
             state.error = null;
-        },
-        updateUser: (state, action) => {
-            state.user = {
-                ...state.user,
-                ...action.payload
-            };
+
+            // Log the updated state for debugging
+            console.log("User state updated:", {
+                id: action.payload.id,
+                username: action.payload.username,
+                name: action.payload.name,
+                isAuthenticated: true
+            });
         },
         clearUser: (state) => {
             state.user = null;
             state.isAuthenticated = false;
+            console.log("User state cleared");
         },
         setLoading: (state, action) => {
             state.loading = action.payload;
         },
         setError: (state, action) => {
             state.error = action.payload;
+            console.error("User state error:", action.payload);
         },
     },
 });
 
-export const { setUser, updateUser, clearUser, setLoading, setError } = userSlice.actions;
+export const { setUser, clearUser, setLoading, setError } = userSlice.actions;
 export default userSlice.reducer;
