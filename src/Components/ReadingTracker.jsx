@@ -1,6 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
-import { FaBookOpen, FaBook, FaCheckCircle, FaTimesCircle } from 'react-icons/fa';
+import { useNavigate } from 'react-router-dom';
+import { FaBook, FaBookOpen, FaCheckCircle, FaTimesCircle } from 'react-icons/fa';
+import { getUserReadingList, updateReadingProgress, addToReadingList } from '../utils/api/readingListService';
 
 const ReadingTracker = ({ bookId, bookType = 'book' }) => {
     const [status, setStatus] = useState('to-read');
@@ -12,8 +14,49 @@ const ReadingTracker = ({ bookId, bookType = 'book' }) => {
     });
     const [isEditing, setIsEditing] = useState(false);
     const [saveSuccess, setSaveSuccess] = useState(false);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState('');
+    const [readingListItem, setReadingListItem] = useState(null);
 
     const isDark = useSelector((state) => state.darkMode.isDark);
+    const { isAuthenticated, user } = useSelector((state) => state.user);
+    const navigate = useNavigate();
+
+    // Fetch user's existing reading data for this book
+    useEffect(() => {
+        const fetchReadingData = async () => {
+            if (!isAuthenticated || !bookId) {
+                setLoading(false);
+                return;
+            }
+
+            try {
+                const readingList = await getUserReadingList();
+                const bookEntry = readingList.find(item => {
+                    const itemBookId = item.expand?.book?.id || item.book;
+                    return itemBookId === bookId;
+                });
+
+                if (bookEntry) {
+                    setReadingListItem(bookEntry);
+                    setStatus(bookEntry.status || 'to-read');
+                    setProgress({
+                        currentPage: bookEntry.currentPage || 0,
+                        totalPages: bookEntry.totalPages || 0,
+                        currentChapter: bookEntry.currentChapter || 0,
+                        totalChapters: bookEntry.totalChapters || 0
+                    });
+                }
+            } catch (error) {
+                console.error('Error fetching reading data:', error);
+                setError('Failed to load reading progress');
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchReadingData();
+    }, [isAuthenticated, bookId]);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -28,25 +71,48 @@ const ReadingTracker = ({ bookId, bookType = 'book' }) => {
         }
     };
 
-    // This is a placeholder function - you'll replace it with real API calls later
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
 
-        // Log the data that would be sent to the server
-        console.log('Reading progress submitted:', {
-            bookId,
-            status,
-            ...progress
-        });
+        // Redirect to login if not authenticated
+        if (!isAuthenticated) {
+            navigate('/login', { state: { from: window.location.pathname } });
+            return;
+        }
 
-        // Show success message and close edit mode
-        setSaveSuccess(true);
-        setIsEditing(false);
+        setError('');
+        setSaveSuccess(false);
 
-        // Reset success message after 3 seconds
-        setTimeout(() => {
-            setSaveSuccess(false);
-        }, 3000);
+        try {
+            if (readingListItem) {
+                // Update existing reading list entry
+                await updateReadingProgress(
+                    readingListItem.id,
+                    status,
+                    progress
+                );
+            } else {
+                // Create new reading list entry
+                const newItem = await addToReadingList(
+                    bookId,
+                    status,
+                    progress
+                );
+                setReadingListItem(newItem);
+            }
+
+            // Show success message and close edit mode
+            setSaveSuccess(true);
+            setIsEditing(false);
+
+            // Reset success message after 3 seconds
+            setTimeout(() => {
+                setSaveSuccess(false);
+            }, 3000);
+        } catch (err) {
+            console.error('Error saving reading progress:', err);
+            setError(err.message || 'Failed to save reading progress');
+        }
     };
 
     // Calculate progress percentage
@@ -80,6 +146,38 @@ const ReadingTracker = ({ bookId, bookType = 'book' }) => {
         }
     };
 
+    if (!isAuthenticated) {
+        return (
+            <div className={`p-4 rounded-lg ${isDark ? 'bg-gray-800' : 'bg-gray-50'}`}>
+                <h3 className={`text-xl font-bold mb-4 ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                    Reading Progress
+                </h3>
+                <p className={isDark ? 'text-gray-300' : 'text-gray-700'}>
+                    Please <button
+                    onClick={() => navigate('/login', { state: { from: window.location.pathname } })}
+                    className="text-blue-500 hover:underline"
+                >
+                    log in
+                </button> to track your reading progress for this book.
+                </p>
+            </div>
+        );
+    }
+
+    if (loading) {
+        return (
+            <div className={`p-4 rounded-lg ${isDark ? 'bg-gray-800' : 'bg-gray-50'}`}>
+                <h3 className={`text-xl font-bold mb-4 ${isDark ? 'text-white' : 'text-gray-900'}`}>
+                    Reading Progress
+                </h3>
+                <div className={`flex justify-center py-4 ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>
+                    <div className={`inline-block h-6 w-6 animate-spin rounded-full border-2 border-solid ${isDark ? 'border-blue-400' : 'border-blue-600'} border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]`}></div>
+                    <span className="ml-2">Loading...</span>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className={`p-4 rounded-lg ${isDark ? 'bg-gray-800' : 'bg-gray-50'}`}>
             <div className="flex justify-between items-center mb-4">
@@ -96,6 +194,12 @@ const ReadingTracker = ({ bookId, bookType = 'book' }) => {
                     </button>
                 )}
             </div>
+
+            {error && (
+                <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+                    {error}
+                </div>
+            )}
 
             {saveSuccess && (
                 <div className="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">
@@ -250,8 +354,8 @@ const ReadingTracker = ({ bookId, bookType = 'book' }) => {
                     <div className="flex items-center gap-2 mb-3">
                         {getStatusIcon()}
                         <span className={`font-medium ${isDark ? 'text-gray-200' : 'text-gray-800'}`}>
-              Status: {status.charAt(0).toUpperCase() + status.slice(1).replace('-', ' ')}
-            </span>
+                            Status: {status.charAt(0).toUpperCase() + status.slice(1).replace('-', ' ')}
+                        </span>
                     </div>
 
                     {bookType === 'book' ? (
