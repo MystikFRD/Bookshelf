@@ -7,17 +7,17 @@ export default {
   darkMode: 'class', // Enable dark mode with class strategy
   theme: {
     extend: {
-      fontFamily:{
-        'Poppins':['Poppins'],
-        'Oswald':['Oswald'],
+      fontFamily: {
+        'Poppins': ['Poppins'],
+        'Oswald': ['Oswald'],
       },
-      colors:{
-        'Azure':'#0866FF',
-        'WhiteSmoke':'#f5f5f5',
-        'Gray':'#F2F4F7',
+      colors: {
+        'Azure': '#0866FF',
+        'WhiteSmoke': '#f5f5f5',
+        'Gray': '#F2F4F7',
       },
-      backgroundImage:{
-        'bgBanner':"url('/public/bgBanner.svg')",
+      backgroundImage: {
+        'bgBanner': "url('./public/bgBanner.svg')",
       }
     },
   },

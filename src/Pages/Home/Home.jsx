@@ -6,6 +6,14 @@ import { Link } from "react-router-dom";
 import { getAllBooks } from "../../utils/api/bookService";
 import { setBooks } from "../../utils/bookSlice";
 
+// Import background directly if available
+// Alternatively, use an online image that's guaranteed to work
+const bannerBgStyle = {
+    backgroundImage: "url('https://images.unsplash.com/photo-1481627834876-b7833e8f5570?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=2341&q=80')",
+    backgroundSize: 'cover',
+    backgroundPosition: 'center'
+};
+
 const Home = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
@@ -42,12 +50,12 @@ const Home = () => {
 
     return (
         <div>
-            <section className={`py-16 px-8 ${isDark ? 'bg-gray-800' : 'bg-gray-100'}`}>
+            <section style={bannerBgStyle} className="py-16 px-8">
                 <div className="max-w-6xl mx-auto">
                     <div className="flex flex-col md:flex-row items-center justify-between">
-                        <div className="md:w-1/2 mb-10 md:mb-0">
-                            <h1 className="text-4xl md:text-5xl font-bold mb-6">The Ultimate Library Management Tool</h1>
-                            <p className="text-lg mb-8">Discover, organize, and enjoy your favorite books in one place.</p>
+                        <div className="md:w-1/2 mb-10 md:mb-0 bg-black/30 p-6 rounded-lg backdrop-blur-sm">
+                            <h1 className="text-4xl md:text-5xl font-bold mb-6 text-white">The Ultimate Library Management Tool</h1>
+                            <p className="text-lg mb-8 text-white">Discover, organize, and enjoy your favorite books in one place.</p>
                             <div className="flex flex-wrap gap-4">
                                 <Link to="/browsebook" className="bg-black text-white px-6 py-3 rounded-full hover:bg-gray-800 transition">
                                     Browse Books
@@ -59,10 +67,9 @@ const Home = () => {
                         </div>
                         <div className="md:w-1/2">
                             <img
-                                src="https://placehold.co/600x400/png?text=Library+Books"
+                                src="https://images.unsplash.com/photo-1507842217343-583bb7270b66?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=2340&q=80"
                                 alt="Library Books"
                                 className="rounded-lg shadow-xl"
-                                loading="lazy"
                             />
                         </div>
                     </div>
