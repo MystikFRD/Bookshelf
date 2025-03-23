@@ -1,25 +1,29 @@
 import React, { useState, useEffect } from "react";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import Categories from "../../Components/Categories";
 import Booksdata from "../../Components/Booksdata";
 import { Link } from "react-router-dom";
 import { getAllBooks } from "../../utils/api/bookService";
+import { setBooks } from "../../utils/bookSlice";
 
 const Home = () => {
-    // State to store fetched books
-    const [books, setBooks] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
 
     const isDark = useSelector(state => state.darkMode.isDark);
+    const books = useSelector(state => state.book.books);
+    const dispatch = useDispatch();
 
     // Fetch books on component mount
     useEffect(() => {
         const fetchBooks = async () => {
             try {
                 setLoading(true);
+                setError('');
                 const fetchedBooks = await getAllBooks();
-                setBooks(fetchedBooks);
+
+                // Store books in Redux store
+                dispatch(setBooks(fetchedBooks));
             } catch (err) {
                 console.error('Error fetching books:', err);
                 setError('Error loading books. Please try again later.');
@@ -28,18 +32,23 @@ const Home = () => {
             }
         };
 
-        fetchBooks();
-    }, []);
+        // Fetch books only if they haven't been loaded yet
+        if (!books || books.length === 0) {
+            fetchBooks();
+        } else {
+            setLoading(false);
+        }
+    }, [dispatch, books]);
 
     return (
         <div>
-            <section className="bg-bgBanner bg-cover bg-center py-16 px-8">
+            <section className={`py-16 px-8 ${isDark ? 'bg-gray-800' : 'bg-gray-100'}`}>
                 <div className="max-w-6xl mx-auto">
                     <div className="flex flex-col md:flex-row items-center justify-between">
                         <div className="md:w-1/2 mb-10 md:mb-0">
                             <h1 className="text-4xl md:text-5xl font-bold mb-6">The Ultimate Library Management Tool</h1>
                             <p className="text-lg mb-8">Discover, organize, and enjoy your favorite books in one place.</p>
-                            <div className="flex space-x-4">
+                            <div className="flex flex-wrap gap-4">
                                 <Link to="/browsebook" className="bg-black text-white px-6 py-3 rounded-full hover:bg-gray-800 transition">
                                     Browse Books
                                 </Link>
@@ -50,9 +59,10 @@ const Home = () => {
                         </div>
                         <div className="md:w-1/2">
                             <img
-                                src="https://images.unsplash.com/photo-1507842217343-583bb7270b66?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=2340&q=80"
+                                src="https://placehold.co/600x400/png?text=Library+Books"
                                 alt="Library Books"
                                 className="rounded-lg shadow-xl"
+                                loading="lazy"
                             />
                         </div>
                     </div>
@@ -64,9 +74,20 @@ const Home = () => {
 
                 <div className="mt-16">
                     {loading ? (
-                        <p className="text-center text-lg">Loading books...</p>
+                        <div className="text-center py-12">
+                            <div className={`inline-block h-12 w-12 animate-spin rounded-full border-4 border-solid ${isDark ? 'border-blue-400' : 'border-blue-600'} border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]`}></div>
+                            <p className="text-lg mt-4">Loading books...</p>
+                        </div>
                     ) : error ? (
-                        <p className="text-center text-red-500">{error}</p>
+                        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded text-center">
+                            <p>{error}</p>
+                            <button
+                                onClick={() => dispatch(setBooks([]))}
+                                className="mt-2 bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
+                            >
+                                Try Again
+                            </button>
+                        </div>
                     ) : (
                         <Booksdata title="Featured Books" books={books} />
                     )}

@@ -1,18 +1,35 @@
-import React from "react";
+import React, { useState } from "react";
 import { Link } from "react-router-dom";
-import { getBookCover } from "../utils/api/OpenLibrary_BookCover";
 import { useSelector } from "react-redux";
+import PropTypes from 'prop-types';
 
 const BookCard = ({ book }) => {
     const isDark = useSelector(state => state.darkMode.isDark);
+    const [imageError, setImageError] = useState(false);
 
-    // Handle both API books and local books
-    const coverUrl = book.img ||
-        (book.cover_i ? getBookCover(book.cover_i) :
-            "https://via.placeholder.com/150");
+    // Default image if no book or if book data is incomplete
+    if (!book || !book.title) {
+        return null;
+    }
+
+    // Handle possible image sources - prioritize direct img URL if available
+    const defaultCover = `https://placehold.co/400x600/png?text=${encodeURIComponent(book.title || 'Book')}`;
+    const coverUrl = imageError ? defaultCover :
+        (book.img ||
+            (book.cover_i ? `https://covers.openlibrary.org/b/id/${book.cover_i}-M.jpg` :
+                defaultCover));
 
     // Extract book ID - handle both local and API books
     const bookId = book.id || (book.key ? book.key.split('/').pop() : 'unknown');
+
+    // Handle missing book type
+    const bookType = book.type || (book.subject && book.subject[0] ? book.subject[0] : "General");
+
+    // Handle author display
+    const authorDisplay = book.author || (book.author_name ? book.author_name.join(", ") : "Unknown Author");
+
+    // Handle rating display
+    const ratingValue = book.rating ? Math.floor(book.rating) : 0;
 
     return (
         <div className={`overflow-hidden shadow-lg border transition-transform hover:scale-105 hover:shadow-xl rounded-lg ${
@@ -23,8 +40,10 @@ const BookCard = ({ book }) => {
             <div className="h-48 overflow-hidden">
                 <img
                     src={coverUrl}
-                    alt={book.title}
+                    alt={book.title || "Book Cover"}
                     className="w-full h-full object-cover"
+                    onError={() => setImageError(true)}
+                    loading="lazy"
                 />
             </div>
 
@@ -39,12 +58,12 @@ const BookCard = ({ book }) => {
                     <span className={`text-xs font-semibold px-2 py-1 rounded ${
                         isDark ? 'bg-blue-900 text-blue-300' : 'bg-blue-100 text-blue-800'
                     }`}>
-                        {book.type || (book.subject ? book.subject[0] : "General")}
+                        {typeof bookType === 'string' ? bookType : "General"}
                     </span>
                     {book.rating && (
                         <span className="ml-2 text-yellow-500 flex">
-                            {'★'.repeat(Math.floor(book.rating))}
-                            <span className="text-gray-500">{'★'.repeat(5-Math.floor(book.rating))}</span>
+                            {'★'.repeat(ratingValue)}
+                            <span className="text-gray-500">{'★'.repeat(5 - ratingValue)}</span>
                         </span>
                     )}
                 </div>
@@ -53,7 +72,7 @@ const BookCard = ({ book }) => {
                     isDark ? 'text-gray-300' : 'text-gray-600'
                 }`}>
                     <span className="font-medium">Author: </span>
-                    {book.author || book.author_name?.join(", ") || "Unknown Author"}
+                    {authorDisplay}
                 </p>
 
                 <p className={`text-sm mb-4 line-clamp-2 ${
@@ -75,6 +94,26 @@ const BookCard = ({ book }) => {
             </div>
         </div>
     );
+};
+
+// Define prop types for validation
+BookCard.propTypes = {
+    book: PropTypes.shape({
+        id: PropTypes.string,
+        key: PropTypes.string,
+        title: PropTypes.string,
+        author: PropTypes.string,
+        author_name: PropTypes.arrayOf(PropTypes.string),
+        type: PropTypes.string,
+        description: PropTypes.string,
+        subject: PropTypes.oneOfType([
+            PropTypes.arrayOf(PropTypes.string),
+            PropTypes.string
+        ]),
+        img: PropTypes.string,
+        cover_i: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+        rating: PropTypes.oneOfType([PropTypes.string, PropTypes.number])
+    }).isRequired
 };
 
 export default BookCard;

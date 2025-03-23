@@ -1,5 +1,4 @@
 import pb from '../pocketbaseClient';
-import { setUser, clearUser } from '../userSlice'; // We'll create this slice next
 
 // Login with email and password
 export const login = async (email, password) => {
@@ -10,7 +9,7 @@ export const login = async (email, password) => {
         return {
             id: authData.record.id,
             email: authData.record.email,
-            name: authData.record.name,
+            name: authData.record.name || authData.record.username,
             avatar: authData.record.avatar,
             created: authData.record.created,
             // You can add more user fields here as needed
@@ -57,5 +56,12 @@ export const getCurrentUser = () => {
         return null;
     }
 
-    return pb.authStore.model;
+    const model = pb.authStore.model;
+    return {
+        id: model.id,
+        email: model.email,
+        name: model.name || model.username,
+        avatar: model.avatar,
+        created: model.created,
+    };
 };

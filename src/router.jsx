@@ -9,6 +9,8 @@ import BookPage from "./Components/BookPage";
 import Login from "./Pages/Auth/Login";
 import Register from "./Pages/Auth/Register";
 import ReadingList from "./Pages/ReadingList/ReadingList.jsx";
+import ProtectedRoute from "./Components/ProtectedRoute";
+import UpdateReadingProgress from "./Pages/ReadingList/UpdateReadingProgress";
 
 const router = createBrowserRouter([
     {
@@ -26,7 +28,7 @@ const router = createBrowserRouter([
             },
             {
                 path: '/addbooks',
-                element: <AddBooks />
+                element: <ProtectedRoute><AddBooks /></ProtectedRoute>
             },
             {
                 path: '/book/:id',
@@ -47,7 +49,11 @@ const router = createBrowserRouter([
             },
             {
                 path: '/reading-list',
-                element: <ReadingList />
+                element: <ProtectedRoute><ReadingList /></ProtectedRoute>
+            },
+            {
+                path: '/update-progress/:id',
+                element: <ProtectedRoute><UpdateReadingProgress /></ProtectedRoute>
             }
         ]
     }

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { login } from '../../utils/api/authService';
 import { setUser, setLoading, setError } from '../../utils/userSlice';
@@ -13,22 +13,27 @@ const Login = () => {
 
     const dispatch = useDispatch();
     const navigate = useNavigate();
+    const location = useLocation();
+
+    // Get the redirect path from location state or default to home
+    const from = location.state?.from?.pathname || '/';
 
     // Redirect if already authenticated
     useEffect(() => {
         if (isAuthenticated) {
-            navigate('/');
+            navigate(from, { replace: true });
         }
-    }, [isAuthenticated, navigate]);
+    }, [isAuthenticated, navigate, from]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         dispatch(setLoading(true));
+        dispatch(setError(null)); // Clear any previous errors
 
         try {
             const userData = await login(email, password);
             dispatch(setUser(userData));
-            navigate('/');
+            navigate(from, { replace: true });
         } catch (err) {
             dispatch(setError(err.message || 'Login failed. Please check your credentials.'));
         } finally {

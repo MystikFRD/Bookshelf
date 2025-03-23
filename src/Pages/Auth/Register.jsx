@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { register } from '../../utils/api/authService';
 import { setUser, setLoading, setError } from '../../utils/userSlice';
@@ -17,13 +17,17 @@ const Register = () => {
 
     const dispatch = useDispatch();
     const navigate = useNavigate();
+    const location = useLocation();
+
+    // Get the redirect path from location state or default to home
+    const from = location.state?.from?.pathname || '/';
 
     // Redirect if already authenticated
     useEffect(() => {
         if (isAuthenticated) {
-            navigate('/');
+            navigate(from, { replace: true });
         }
-    }, [isAuthenticated, navigate]);
+    }, [isAuthenticated, navigate, from]);
 
     const handleChange = (e) => {
         setFormData({
@@ -34,6 +38,7 @@ const Register = () => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        dispatch(setError(null)); // Clear previous errors
 
         // Simple validation
         if (formData.password !== formData.confirmPassword) {
@@ -51,7 +56,7 @@ const Register = () => {
         try {
             const userData = await register(formData);
             dispatch(setUser(userData));
-            navigate('/');
+            navigate(from, { replace: true });
         } catch (err) {
             dispatch(setError(err.message || 'Registration failed. Please try again.'));
         } finally {
